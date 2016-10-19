@@ -1,0 +1,58 @@
+#!/bin/bash
+
+if test "$#" -ne 1; #CHECK NB ARGS
+then
+    exit 84
+fi
+
+if [ ! -f "$1" ]; #CHECK IF VALID ARGS
+then
+   exit 84;
+fi
+DIR=$(grep PROJECT_DIR $1 | cut -d ";" -f2-)
+SOURCE_DIR=$(grep SOURCES_DIR $1 | cut -d ";" -f2-)
+if [ -z $SOURCE_DIR ] || [ -z $DIR ]
+then
+    exit 84
+fi
+if [ `ls -a $DIR | sed -e "/\.$/d" | wc -l` -lt 0 ] #IF DIR IS EMPTY
+then
+    exit 84
+fi
+if [ -e $DIR"/"Makefile ]; #IF MAKEFILE EXIST
+then
+    rm $DIR"/"Makefile
+fi
+if [ `find $DIR"/"$SOURCE_DIR"/" -type f | wc -l` -eq 0 ]; #IF SOURCE DIR IS EMPTY
+then
+    exit 84
+fi
+LDFLAGS=$(grep LDFLAGS $1 |cut -d ";" -f2-)
+CFLAGS=$(grep CFLAGS $1 |cut -d ";" -f2-)
+NAME=$(grep EXEC $1 | cut -d ";" -f2-)
+SRC=$(ls $DIR"/"$SOURCE_DIR"/" | grep -F ".c")
+CC=$(grep CC $1 | cut -d ";" -f2-)
+if [ -z "$CC" ] || [ -z "$SRC" ] || [ -z "$NAME" ] #IF EMPTY VAR
+then
+    exit 84
+fi
+#START PRINTING
+printf "CC\t= $CC\n\n" >> $DIR"/"Makefile
+printf "RM\t= rm -f\n\n" >> $DIR"/"Makefile
+printf "CFLAGS\t= %s\n\n" "$CFLAGS" >> $DIR"/"Makefile
+printf "LDFLAGS\t= %s\n\n" "$LDFLAGS" >> $DIR"/"Makefile
+printf "NAME\t= $NAME\n\n" >> $DIR"/"Makefile
+printf "SRCS\t=" >> $DIR"/"Makefile
+for line in $SRC;
+do
+    printf " %s %c\n\t " "`find -name $line | cut -d "/" -f3-`" "\\" >> $DIR"/"Makefile
+done
+printf "\n" >> $DIR"/"Makefile
+printf "OBJS\t= \$(SRCS:.c=.o)\n\n" >> $DIR"/"Makefile
+printf "all: \$(NAME)\n\n" >> $DIR"/"Makefile
+printf "\$(NAME): \$(OBJS)\n\t \$(CC) \$(OBJS) -o \$(NAME) \$(LDFLAGS)\n\n" >> $DIR"/"Makefile
+printf "clean:\n\t\$(RM) \$(OBJS)\n\n" >> $DIR"/"Makefile
+printf "fclean: clean\n\t\$(RM) \$(NAME)\n\n" >> $DIR"/"Makefile
+printf "re: fclean all\n\n" >> $DIR"/"Makefile
+printf ".PHONY: all clean fclean re" >> $DIR"/"Makefile
+exit 0
