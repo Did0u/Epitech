@@ -19,7 +19,7 @@ if [ `ls -a $DIR | sed -e "/\.$/d" | wc -l` -lt 0 ] #IF DIR IS EMPTY
 then
     exit 84
 fi
-if [ -e $DIR"/"Makefile ]; #IF MAKEFILE EXIST
+if [ -e $DIR"/"Makefile ]; #IF MAKEFILE EXIST :)
 then
     rm $DIR"/"Makefile
 fi
